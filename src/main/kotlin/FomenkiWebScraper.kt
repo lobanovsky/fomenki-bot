@@ -71,10 +71,12 @@ object FomenkiWebScraper {
         }
 
         val options = ChromeOptions().apply {
-            addArguments("--headless")
+            addArguments("--headless=new")
             addArguments("--disable-gpu")
             addArguments("--no-sandbox")
+            addArguments("--disable-setuid-sandbox")
             addArguments("--disable-dev-shm-usage")
+            addArguments("--no-zygote")
         }
         val driver: WebDriver = ChromeDriver(options)
         return try {
