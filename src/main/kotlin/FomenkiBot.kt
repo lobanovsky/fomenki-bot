@@ -20,8 +20,28 @@ fun main() {
     initDatabase(dbName)
     updatePerformancesDatabase()
 
+    val socksServer = System.getenv("SOCKS_SERVER")
+    val socksPort   = System.getenv("SOCKS_PORT")?.toIntOrNull()
+    val socksUser   = System.getenv("SOCKS_USER")
+    val socksPass   = System.getenv("SOCKS_PASS")
+
+    val proxy = if (!socksServer.isNullOrBlank() && socksPort != null) {
+        if (!socksUser.isNullOrBlank() && !socksPass.isNullOrBlank()) {
+            java.net.Authenticator.setDefault(object : java.net.Authenticator() {
+                override fun getPasswordAuthentication() = java.net.PasswordAuthentication(
+                    socksUser, socksPass.toCharArray()
+                )
+            })
+        }
+        logger().info("Используется SOCKS5 прокси: $socksServer:$socksPort")
+        java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress(socksServer, socksPort))
+    } else {
+        java.net.Proxy.NO_PROXY
+    }
+
     val bot = bot {
         this.token = token
+        this.proxy = proxy
         logLevel = LogLevel.Error
         logger().info("Fomenki bot is running...")
 

@@ -29,7 +29,10 @@ object FomenkiWebScraper {
             // Deduplicate by URL
             val seen = mutableSetOf<String>()
             for (card in cards) {
-                val title = card.attr("title").trim()
+                val title = card.attr("title")
+                    .replace("\u00AD", "")
+                    .replace("\u00A0", " ")
+                    .trim()
                 val href = card.attr("href").trim()
 
                 // Resolve relative href against the repertoire base URL
