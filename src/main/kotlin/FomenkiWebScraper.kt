@@ -17,13 +17,13 @@ object FomenkiWebScraper {
                 .userAgent("Mozilla/5.0 (compatible; bot)")
                 .get()
 
-            // Performance cards are <a href="slug/" title="Full Title"> anchors.
-            // Filter out navigation/service links: must have a non-empty title and
-            // an href that looks like a relative slug (no scheme, no empty string).
-            val cards = doc.select("a[href][title]").filter { el ->
+            // Performance cards are <a href="slug/" title="Full Title"> anchors inside <main>.
+            // Navigation links have absolute hrefs starting with "/" (e.g. "/timetable/"),
+            // while performance slugs are relative (e.g. "4-25/", "aboutlove/").
+            val cards = doc.select("main a[href][title]").filter { el ->
                 val href = el.attr("href")
                 val title = el.attr("title").trim()
-                title.isNotEmpty() && !href.startsWith("http") && !href.startsWith("#") && href.isNotBlank()
+                title.isNotEmpty() && !href.startsWith("/") && !href.startsWith("http") && !href.startsWith("#") && href.isNotBlank()
             }
 
             // Deduplicate by URL
@@ -97,56 +97,31 @@ object FomenkiWebScraper {
             // Log a short HTML snippet on first call to aid selector debugging
             logger().debug("HTML snippet [${performance.title}]: ${html.take(2000)}")
 
-            // fomenki.ru schedule structure (observed):
-            //   Each show date is in a <p> with text like "30 марта, 19:00"
-            //   A "Купить билет" anchor (<a href="/boxoffice/#XXXXXXXX">) in the same
-            //   parent block indicates tickets are available.
-            //
-            // Strategy: find all elements that contain a date/time pattern, then check
-            // whether a sibling or nearby element contains "Купить билет".
-            //
-            // We look for the closest common container that groups date + buy-link.
-            // Try several selectors in order of specificity.
+            // fomenki.ru schedule structure (confirmed from live site):
+            //   <div class="events">
+            //     <div class="event">
+            //       <p class="date">7 мая, 19:00</p>
+            //       <p class="tickets">
+            //         <a href="/boxoffice/#XXXXXXXX" title="Купить билет" class="btn lot-of">Купить билет</a>
+            //       </p>
+            //     </div>
+            //     ...
+            //   </div>
+            // When no tickets: the <a title="Купить билет"> is absent from <p class="tickets">.
 
-            val scheduleBlocks = doc.select(".schedule__item, .afisha__item, .performance-schedule__item, .concert-item")
+            val scheduleBlocks = doc.select("div.event")
 
-            if (scheduleBlocks.isNotEmpty()) {
-                // Structured blocks found — extract date and ticket link from each
-                for (block in scheduleBlocks) {
-                    val dateText = block.select("p, .date, .schedule-date, time").firstOrNull()?.text()?.trim() ?: continue
-                    val ticketsAvailable = block.select("a:contains(Купить билет), a:contains(Билет)").isNotEmpty()
-                    schedules.add(Schedule(
-                        date = dateText,
-                        time = "",
-                        author = "",
-                        scene = "",
-                        ageRestriction = "",
-                        ticketsAvailable = ticketsAvailable
-                    ))
-                }
-            } else {
-                // Fallback: scan all <p> tags for date/time pattern and check adjacent siblings
-                // for a buy-link within the same parent
-                val paragraphs = doc.select("p")
-                val dateTimePattern = Regex("""\d{1,2}\s+\w+,\s*\d{2}:\d{2}""")
-
-                for (p in paragraphs) {
-                    val text = p.text().trim()
-                    if (!dateTimePattern.containsMatchIn(text)) continue
-
-                    // Check the parent container for a "Купить билет" link
-                    val parent = p.parent() ?: continue
-                    val ticketsAvailable = parent.select("a:contains(Купить билет), a:contains(Билет)").isNotEmpty()
-
-                    schedules.add(Schedule(
-                        date = text,
-                        time = "",
-                        author = "",
-                        scene = "",
-                        ageRestriction = "",
-                        ticketsAvailable = ticketsAvailable
-                    ))
-                }
+            for (block in scheduleBlocks) {
+                val dateText = block.selectFirst("p.date")?.text()?.trim() ?: continue
+                val ticketsAvailable = block.select("a[title=Купить билет], a[href*=/boxoffice/]").isNotEmpty()
+                schedules.add(Schedule(
+                    date = dateText,
+                    time = "",
+                    author = "",
+                    scene = "",
+                    ageRestriction = "",
+                    ticketsAvailable = ticketsAvailable
+                ))
             }
 
             if (schedules.isEmpty()) {
