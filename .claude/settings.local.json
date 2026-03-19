@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree:*)",
+      "Bash(git config:*)",
+      "WebFetch(domain:fomenki.ru)",
+      "Bash(cp /Users/evgeny/Projects/telega/ramt-bot/gradle/wrapper/gradle-wrapper.jar /Users/evgeny/Projects/telega/fomenki-bot/gradle/wrapper/gradle-wrapper.jar)",
+      "Bash(cp /Users/evgeny/Projects/telega/ramt-bot/gradlew /Users/evgeny/Projects/telega/fomenki-bot/gradlew)",
+      "Bash(cp /Users/evgeny/Projects/telega/ramt-bot/gradlew.bat /Users/evgeny/Projects/telega/fomenki-bot/gradlew.bat)",
+      "Bash(chmod +x /Users/evgeny/Projects/telega/fomenki-bot/gradlew)",
+      "Bash(./gradlew shadowJar 2>&1)"
+    ]
+  }
+}
