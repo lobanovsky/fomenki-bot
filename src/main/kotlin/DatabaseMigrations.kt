@@ -9,6 +9,7 @@ object DatabaseMigrations {
         migration_002_AddSubscriptionStatusFields()
         migration_003_AddSubscribedAtToUserPerformanceSubscriptions()
         migration_004_AddNotificationCountToSubscribers()
+        migration_005_RemoveNonPerformanceEntries()
     }
 
     /**
@@ -81,6 +82,26 @@ object DatabaseMigrations {
                     throw e
                 }
             }
+        }
+    }
+
+    /**
+     * Миграция #005: Удаление некорректных записей спектаклей (навигационных ссылок)
+     */
+    private fun migration_005_RemoveNonPerformanceEntries() {
+        transaction {
+            exec("""
+                DELETE FROM UserPerformanceSubscriptions
+                WHERE performance_id IN (
+                    SELECT id FROM Performances
+                    WHERE url NOT LIKE 'https://fomenki.ru/performance/%/%'
+                )
+            """)
+            exec("""
+                DELETE FROM Performances
+                WHERE url NOT LIKE 'https://fomenki.ru/performance/%/%'
+            """)
+            println("✅ Миграция #005: Удалены некорректные записи спектаклей")
         }
     }
 
