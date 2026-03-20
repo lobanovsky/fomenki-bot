@@ -9,10 +9,10 @@ services:
       DB_NAME: ${DB_NAME}
       CHROMEDRIVER_PATH: ${CHROMEDRIVER_PATH}
       DEV_MODE: ${DEV_MODE}
-      SOCKS_SERVER: ${SOCKS_SERVER}
-      SOCKS_PORT: ${SOCKS_PORT}
-      SOCKS_USER: ${SOCKS_USER}
-      SOCKS_PASS: ${SOCKS_PASS}
+#      SOCKS_SERVER: ${SOCKS_SERVER}
+#      SOCKS_PORT: ${SOCKS_PORT}
+#      SOCKS_USER: ${SOCKS_USER}
+#      SOCKS_PASS: ${SOCKS_PASS}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

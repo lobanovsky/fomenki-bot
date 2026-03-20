@@ -1,7 +1,9 @@
 name: to-avocado
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
