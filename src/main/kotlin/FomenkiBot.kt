@@ -28,12 +28,9 @@ fun main() {
     val proxy = if (!socksServer.isNullOrBlank() && socksPort != null) {
         if (!socksUser.isNullOrBlank() && !socksPass.isNullOrBlank()) {
             java.net.Authenticator.setDefault(object : java.net.Authenticator() {
-                override fun getPasswordAuthentication(): java.net.PasswordAuthentication? {
-                    if (requestingHost == socksServer && requestingPort == socksPort) {
-                        return java.net.PasswordAuthentication(socksUser, socksPass.toCharArray())
-                    }
-                    return null
-                }
+                override fun getPasswordAuthentication() = java.net.PasswordAuthentication(
+                    socksUser, socksPass.toCharArray()
+                )
             })
         }
         logger().info("Используется SOCKS5 прокси: $socksServer:$socksPort")
