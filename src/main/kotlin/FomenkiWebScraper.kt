@@ -87,6 +87,16 @@ object FomenkiWebScraper {
         }
     }
 
+    // Парсит минимальную цену из текста блока события.
+    // Ищет паттерны вида: "от 1 500 руб", "1500 ₽", "от 1500 р." и т.д.
+    internal fun parseMinPrice(text: String): Int? {
+        val cleanText = text.replace("\u00A0", " ").replace("&nbsp;", " ")
+        // Паттерн: опциональное "от", затем число (возможно с пробелами), затем "руб", "₽" или "р."
+        val priceRegex = Regex("""(?:от\s+)?(\d[\d\s]*\d|\d)\s*(?:руб|₽|р\.)""", RegexOption.IGNORE_CASE)
+        val match = priceRegex.find(cleanText) ?: return null
+        return match.groupValues[1].replace("\\s".toRegex(), "").toIntOrNull()
+    }
+
     fun scrapeSchedule(performance: Performance): List<Schedule> {
         val schedules = mutableListOf<Schedule>()
 
@@ -119,13 +129,15 @@ object FomenkiWebScraper {
             for (block in scheduleBlocks) {
                 val dateText = block.selectFirst("p.date")?.text()?.trim() ?: continue
                 val ticketsAvailable = block.select("a[title=Купить билет], a[href*=/boxoffice/]").isNotEmpty()
+                val minPrice = parseMinPrice(block.text())
                 schedules.add(Schedule(
                     date = dateText,
                     time = "",
                     author = "",
                     scene = "",
                     ageRestriction = "",
-                    ticketsAvailable = ticketsAvailable
+                    ticketsAvailable = ticketsAvailable,
+                    minPrice = minPrice
                 ))
             }
 

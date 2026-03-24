@@ -31,6 +31,7 @@ object UserPerformanceSubscriptions : Table() {
     val userId = long("user_id").references(Subscribers.userId)
     val performanceId = integer("performance_id").references(Performances.id)
     val subscribedAt = datetime("subscribed_at").default(LocalDateTime.now())
+    val maxPrice = integer("max_price").nullable()
     override val primaryKey = PrimaryKey(userId, performanceId)
 }
 
@@ -230,7 +231,7 @@ fun ensureSubscriberExists(userId: Long, firstName: String, lastName: String?, u
     }
 }
 
-fun getSubscribersForPerformance(performanceId: Int): List<Long> {
+fun getSubscribersForPerformance(performanceId: Int): List<Pair<Long, Int?>> {
     return transaction {
         (UserPerformanceSubscriptions innerJoin Subscribers)
             .selectAll()
@@ -238,7 +239,33 @@ fun getSubscribersForPerformance(performanceId: Int): List<Long> {
                 (UserPerformanceSubscriptions.performanceId eq performanceId) and
                         (Subscribers.isActive eq true)
             }
-            .map { it[UserPerformanceSubscriptions.userId] }
+            .map { it[UserPerformanceSubscriptions.userId] to it[UserPerformanceSubscriptions.maxPrice] }
+    }
+}
+
+fun setSubscriptionMaxPrice(userId: Long, perfId: Int, maxPrice: Int?) {
+    transaction {
+        UserPerformanceSubscriptions.update({
+            (UserPerformanceSubscriptions.userId eq userId) and
+                    (UserPerformanceSubscriptions.performanceId eq perfId)
+        }) {
+            it[UserPerformanceSubscriptions.maxPrice] = maxPrice
+        }
+    }
+}
+
+fun getUserSubscriptionsWithPrice(userId: Long): List<Triple<Int, String, Int?>> {
+    return transaction {
+        (UserPerformanceSubscriptions innerJoin Performances)
+            .selectAll()
+            .where { UserPerformanceSubscriptions.userId eq userId }
+            .map {
+                Triple(
+                    it[Performances.id],
+                    it[Performances.title],
+                    it[UserPerformanceSubscriptions.maxPrice]
+                )
+            }
     }
 }
 

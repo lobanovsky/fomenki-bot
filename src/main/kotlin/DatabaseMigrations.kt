@@ -10,6 +10,8 @@ object DatabaseMigrations {
         migration_003_AddSubscribedAtToUserPerformanceSubscriptions()
         migration_004_AddNotificationCountToSubscribers()
         migration_005_RemoveNonPerformanceEntries()
+        migration_006_AddMaxPriceToSubscribers()
+        migration_007_AddMaxPriceToUserPerformanceSubscriptions()
     }
 
     /**
@@ -102,6 +104,45 @@ object DatabaseMigrations {
                 WHERE url NOT LIKE 'https://fomenki.ru/performance/%/%'
             """)
             println("✅ Миграция #005: Удалены некорректные записи спектаклей")
+        }
+    }
+
+    /**
+     * Миграция #006: Добавление поля max_price в таблицу Subscribers (устарела — поле не используется).
+     * Оставлена для совместимости с уже применёнными миграциями.
+     */
+    private fun migration_006_AddMaxPriceToSubscribers() {
+        transaction {
+            try {
+                exec("ALTER TABLE Subscribers ADD COLUMN max_price INTEGER")
+                println("✅ Миграция #006: Колонка max_price в Subscribers добавлена (не используется)")
+            } catch (e: Exception) {
+                if (e.message?.contains("duplicate column name", ignoreCase = true) == true) {
+                    println("ℹ️ Миграция #006: Колонка max_price в Subscribers уже существует, пропускаем")
+                } else {
+                    println("⚠️ Миграция #006: Ошибка - ${e.message}")
+                    throw e
+                }
+            }
+        }
+    }
+
+    /**
+     * Миграция #007: Добавление поля max_price в таблицу UserPerformanceSubscriptions (лимит цены на подписку)
+     */
+    private fun migration_007_AddMaxPriceToUserPerformanceSubscriptions() {
+        transaction {
+            try {
+                exec("ALTER TABLE UserPerformanceSubscriptions ADD COLUMN max_price INTEGER")
+                println("✅ Миграция #007: Колонка max_price в UserPerformanceSubscriptions добавлена")
+            } catch (e: Exception) {
+                if (e.message?.contains("duplicate column name", ignoreCase = true) == true) {
+                    println("ℹ️ Миграция #007: Колонка max_price уже существует, пропускаем")
+                } else {
+                    println("⚠️ Миграция #007: Ошибка - ${e.message}")
+                    throw e
+                }
+            }
         }
     }
 

@@ -49,6 +49,7 @@ fun main() {
             perfCommands()
             callbackCommands()
             statusCommands()
+            priceCommands()
             adminCommands()
             statsCommands()
         }
@@ -66,6 +67,7 @@ fun main() {
             BotCommand("perfs", "Список спектаклей"),
             BotCommand("status", "Мои подписки"),
             BotCommand("mysubs", "Мои подписки со ссылками"),
+            BotCommand("setprice", "Лимит цены билета"),
         )
     )
 
@@ -107,13 +109,24 @@ fun Bot.checkTickets(performance: Performance) {
     logger().info(message)
 
     if (availableSchedules.isNotEmpty()) {
-        val details = availableSchedules.joinToString("") {
-            "\n • ${it.date}"
-        }
-        getSubscribersForPerformance(performance.id).forEach { userId ->
+        getSubscribersForPerformance(performance.id).forEach { (userId, userMaxPrice) ->
+            val filtered = if (userMaxPrice != null) {
+                // Уведомляем если хотя бы одна дата: цена неизвестна (null) или не превышает лимит
+                availableSchedules.filter { it.minPrice == null || it.minPrice <= userMaxPrice }
+            } else {
+                availableSchedules
+            }
+
+            if (filtered.isEmpty()) return@forEach
+
+            val details = filtered.joinToString("") { s ->
+                val priceStr = if (s.minPrice != null) " (от ${s.minPrice} ₽)" else ""
+                "\n • ${s.date}$priceStr"
+            }
+            val priceNote = if (userMaxPrice != null) " [лимит: до $userMaxPrice ₽]" else ""
             val result = sendMessage(
                 chatId = ChatId.fromId(userId),
-                text = "🔔<b>Доступны билеты на [${performance.title}]:</b> $details <a href=\"${performance.url}\">Купить</a>",
+                text = "🔔<b>Доступны билеты на [${performance.title}]:</b>$details\n<a href=\"${performance.url}\">Купить</a>$priceNote",
                 parseMode = HTML
             )
             if (result.isSuccess) {

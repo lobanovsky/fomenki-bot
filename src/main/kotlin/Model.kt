@@ -10,5 +10,6 @@ data class Schedule(
     val author: String,
     val scene: String,
     val ageRestriction: String,
-    val ticketsAvailable: Boolean
+    val ticketsAvailable: Boolean,
+    val minPrice: Int? = null  // минимальная цена билета в рублях, null если не удалось определить
 )
