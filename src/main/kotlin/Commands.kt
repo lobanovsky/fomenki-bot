@@ -48,12 +48,6 @@ fun Dispatcher.callbackCommands() {
 
         if (subscribe) {
             subscribeUserToPerformance(userId, perfId)
-            val perfTitle = getAllPerformances().find { it.first == perfId }?.second ?: ""
-            bot.sendMessage(
-                ChatId.fromId(chatId),
-                "✅ Подписан на <b>$perfTitle</b>.\n💰 Лимит цены: /setprice $perfId 3000",
-                parseMode = HTML
-            )
         } else {
             unsubscribeUserFromPerformance(userId, perfId)
         }
@@ -78,7 +72,7 @@ fun Dispatcher.callbackCommands() {
 fun Dispatcher.statusCommands() {
     command("status") {
         val userId = message.from?.id ?: return@command
-        val subscriptions = getUserSubscriptionsWithPrice(userId)
+        val subscriptions = getUserSubscribedPerformances(userId)
 
         if (subscriptions.isEmpty()) {
             bot.sendMessage(
@@ -86,10 +80,7 @@ fun Dispatcher.statusCommands() {
                 "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте /perfs чтобы выбрать спектакли."
             )
         } else {
-            val list = subscriptions.joinToString("\n") { (_, title, price) ->
-                val priceStr = if (price != null) " — до $price ₽" else ""
-                "🎭 $title$priceStr"
-            }
+            val list = subscriptions.joinToString("\n") { "🎭 ${it.second}" }
             bot.sendMessage(
                 ChatId.fromId(message.chat.id),
                 "✅ Вы подписаны на уведомления о билетах:\n$list"
@@ -99,7 +90,7 @@ fun Dispatcher.statusCommands() {
 
     command("mysubs") {
         val userId = message.from?.id ?: return@command
-        val subscriptions = getUserSubscriptionsWithPrice(userId)
+        val subscriptions = getUserSubscribedPerformances(userId)
 
         if (subscriptions.isEmpty()) {
             bot.sendMessage(
@@ -107,69 +98,14 @@ fun Dispatcher.statusCommands() {
                 "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте /perfs чтобы выбрать спектакли."
             )
         } else {
-            val perfUrls = getUserSubscribedPerformances(userId).associate { it.first to it.third }
-            val list = subscriptions.joinToString("\n") { (id, title, price) ->
-                val priceStr = if (price != null) " — до $price ₽" else ""
-                val url = perfUrls[id] ?: ""
-                "🎭 <a href=\"$url\">$title</a>$priceStr"
+            val list = subscriptions.joinToString("\n") {
+                "🎭 <a href=\"${it.third}\">${it.second}</a>"
             }
             bot.sendMessage(
                 ChatId.fromId(message.chat.id),
                 "✅ Ваши подписки:\n$list",
                 parseMode = HTML
             )
-        }
-    }
-}
-
-fun Dispatcher.priceCommands() {
-    command("setprice") {
-        val userId = message.from?.id ?: return@command
-        val chatId = ChatId.fromId(message.chat.id)
-        val args = message.text?.removePrefix("/setprice")?.trim()?.split("\\s+".toRegex()) ?: emptyList()
-
-        if (args.isEmpty() || args.all { it.isBlank() }) {
-            val subs = getUserSubscriptionsWithPrice(userId)
-            if (subs.isEmpty()) {
-                bot.sendMessage(chatId, "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте /perfs чтобы выбрать спектакли.")
-                return@command
-            }
-            val list = subs.joinToString("\n") { (id, title, price) ->
-                val priceStr = if (price != null) "до $price ₽" else "без лимита"
-                "🎭 $title (ID: $id) — $priceStr"
-            }
-            bot.sendMessage(
-                chatId,
-                "💰 <b>Лимиты цен на ваши подписки:</b>\n\n$list\n\n" +
-                        "Чтобы установить лимит: /setprice ID ЦЕНА\n" +
-                        "Чтобы снять лимит: /setprice ID 0",
-                parseMode = HTML
-            )
-            return@command
-        }
-
-        val perfId = args.getOrNull(0)?.toIntOrNull()
-        val priceArg = args.getOrNull(1)?.toIntOrNull()
-
-        if (perfId == null || priceArg == null || priceArg < 0) {
-            bot.sendMessage(chatId, "⚠️ Формат: /setprice ID ЦЕНА\nПример: /setprice 12 3000\nСнять лимит: /setprice 12 0")
-            return@command
-        }
-
-        val subs = getUserSubscriptionsWithPrice(userId)
-        val sub = subs.find { it.first == perfId }
-        if (sub == null) {
-            bot.sendMessage(chatId, "⚠️ Вы не подписаны на спектакль с ID $perfId.\nПосмотрите свои подписки: /setprice")
-            return@command
-        }
-
-        val newPrice = if (priceArg == 0) null else priceArg
-        setSubscriptionMaxPrice(userId, perfId, newPrice)
-
-        if (newPrice != null) {
-            bot.sendMessage(chatId, "✅ Лимит для <b>${sub.second}</b>: до <b>$newPrice ₽</b>.\n\nЕсли цена не указана на сайте — уведомлю в любом случае.", parseMode = HTML)
-        } else {
-            bot.sendMessage(chatId, "✅ Лимит для <b>${sub.second}</b> снят. Буду уведомлять о любых доступных билетах.", parseMode = HTML)
         }
     }
 }
