@@ -1,7 +1,9 @@
 name: to-mr17dom1
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
