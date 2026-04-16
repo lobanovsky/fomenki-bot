@@ -60,10 +60,6 @@ jobs:
           echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "CHROMEDRIVER_PATH=${{ secrets.CHROMEDRIVER_PATH }}" >> .env
-#          echo "SOCKS_SERVER"=${{ secrets.SOCKS_SERVER }} >> .env
-#          echo "SOCKS_PORT"=${{ secrets.SOCKS_PORT }} >> .env
-#          echo "SOCKS_USER"=${{ secrets.SOCKS_USER }} >> .env
-#          echo "SOCKS_PASS"=${{ secrets.SOCKS_PASS }} >> .env
 
       - name: copy files to host
         uses: appleboy/scp-action@v0.1.7
