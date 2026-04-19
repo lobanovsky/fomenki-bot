@@ -162,15 +162,6 @@ private fun menuKeyboard() = KeyboardReplyMarkup(
 
 fun Dispatcher.startCommands() {
     command("start") {
-        val userId = message.from?.id ?: return@command
-        runBlocking {
-            ApiClient.syncUser(
-                telegramId = userId,
-                firstName = message.from?.firstName ?: "",
-                lastName = message.from?.lastName,
-                username = message.from?.username
-            )
-        }
         bot.sendMessage(
             chatId = ChatId.fromId(message.chat.id),
             text = "Выберите действие:",
