@@ -6,11 +6,13 @@ services:
     environment:
       TZ: Europe/Moscow
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      DB_NAME: ${DB_NAME}
-      CHROMEDRIVER_PATH: ${CHROMEDRIVER_PATH}
-      DEV_MODE: ${DEV_MODE}
+      BACKEND_URL: ${BACKEND_URL}
+      FOMENKI_API_KEY: ${FOMENKI_API_KEY}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
+      WEBHOOK_PORT: ${WEBHOOK_PORT:-8084}
+    ports:
+      - "${WEBHOOK_PORT:-8084}:${WEBHOOK_PORT:-8084}"
     volumes:
-      - ./data:/app/data
       - ./logs:/app/logs
     env_file:
       - .env
