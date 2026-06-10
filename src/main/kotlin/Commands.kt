@@ -121,7 +121,7 @@ private fun sendMySubs(bot: Bot, userId: Long, chatId: ChatId) {
     if (subscriptions.isEmpty()) {
         bot.sendMessage(
             chatId,
-            "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте /perfs чтобы выбрать спектакли.",
+            "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте кнопку \"Спектакли\" чтобы выбрать спектакли.",
             replyMarkup = menuKeyboard()
         )
     } else {
@@ -165,7 +165,7 @@ private const val PAYMENT_TEXT = """Стоимость: 1000₽ за 6 меся�
 
 private fun menuKeyboard() = KeyboardReplyMarkup(
     keyboard = listOf(
-        listOf(KeyboardButton("📜 Спектакли"), KeyboardButton("🔗 Мои подписки")),
+        listOf(KeyboardButton("📜 Все спектакли"), KeyboardButton("🔗 Мои спектакли")),
         listOf(KeyboardButton("📋 Моя подписка")),
         listOf(KeyboardButton("ℹ️ Информация"), KeyboardButton("💳 Оплата"))
     ),
@@ -192,12 +192,12 @@ fun Dispatcher.startCommands() {
 }
 
 fun Dispatcher.menuCommands() {
-    text("📜 Список спектаклей") {
+    text("📜 Все спектакли") {
         val userId = message.from?.id ?: return@text
         sendPerformances(bot, userId, ChatId.fromId(message.chat.id))
     }
 
-    text("🔗 Мои подписки") {
+    text("🔗 Мои спектакли") {
         val userId = message.from?.id ?: return@text
         sendMySubs(bot, userId, ChatId.fromId(message.chat.id))
     }
