@@ -121,7 +121,7 @@ private fun sendMySubs(bot: Bot, userId: Long, chatId: ChatId) {
     if (subscriptions.isEmpty()) {
         bot.sendMessage(
             chatId,
-            "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте кнопку \"Спектакли\" чтобы выбрать спектакли.",
+            "ℹ Вы не подписаны ни на один спектакль.\nИспользуйте кнопку \"📜 Все спектакли\" чтобы выбрать спектакли.",
             replyMarkup = menuKeyboard()
         )
     } else {
